@@ -68,7 +68,7 @@
 <div>
 	<div class="page-head">
 		<div class="crumbs">
-			<a href="/">Mailboxes</a>
+			<a href="/">All mail</a>
 			<span class="sep">/</span>
 			<span>{mailbox?.username ?? `Mailbox ${mailboxId}`}</span>
 		</div>

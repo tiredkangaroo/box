@@ -10,7 +10,7 @@
 			<span class="brand-name">Box</span>
 		</a>
 		<nav class="nav">
-			<a href="/">Mailboxes</a>
+			<a href="/">Inbox</a>
 		</nav>
 	</header>
 	<main class="content">

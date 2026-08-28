@@ -16,6 +16,16 @@ export interface Email extends EmailSummary {
   body: string;
 }
 
+export interface MessageWithMailbox extends EmailSummary {
+  mailbox: Mailbox;
+}
+
+export interface InboxLoad {
+  mailboxes: Mailbox[];
+  messages: MessageWithMailbox[];
+  failed: number;
+}
+
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     headers: { "Content-Type": "application/json" },
@@ -53,4 +63,22 @@ export const api = {
   listMessages: (id: number) => request<EmailSummary[]>(`/api/mailboxes/${id}/messages`),
 
   getMessage: (mailboxId: number, emailId: number) => request<Email>(`/api/mailboxes/${mailboxId}/messages/${emailId}`),
+
+  listAllMessages: async (): Promise<InboxLoad> => {
+    const mailboxes = await api.listMailboxes();
+    const settled = await Promise.allSettled(mailboxes.map((m) => api.listMessages(m.id)));
+    const messages: MessageWithMailbox[] = [];
+    mailboxes.forEach((box, i) => {
+      const res = settled[i];
+      if (res.status === "fulfilled") {
+        for (const msg of res.value) messages.push({ ...msg, mailbox: box });
+      }
+    });
+    messages.sort((a, b) => new Date(b.received_at).getTime() - new Date(a.received_at).getTime());
+    return { mailboxes, messages, failed: settled.length - messagesFailed(settled) };
+  },
 };
+
+function messagesFailed(settled: PromiseSettledResult<EmailSummary[]>[]): number {
+  return settled.filter((r) => r.status === "rejected").length;
+}

@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import { api, type Email } from '$lib/api';
+	import { api, type Email, type Mailbox } from '$lib/api';
 
 	let mailboxId = $derived(Number(page.params.id));
 	let emailId = $derived(Number(page.params.message_id));
 
+	let mailbox: Mailbox | null = $state(null);
 	let email: Email | null = $state(null);
 	let loading = $state(true);
 	let error = $state('');
@@ -30,6 +31,8 @@
 	onMount(async () => {
 		loading = true;
 		try {
+			const boxes = await api.listMailboxes();
+			mailbox = boxes.find((b) => b.id === mailboxId) ?? null;
 			email = await api.getMessage(mailboxId, emailId);
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load message';
@@ -41,9 +44,9 @@
 
 <div>
 	<div class="crumbs">
-		<a href="/">Mailboxes</a>
+		<a href="/">All mail</a>
 		<span class="sep">/</span>
-		<a href={`/mailbox/${mailboxId}`}>Inbox</a>
+		<a href={`/mailbox/${mailboxId}`}>{mailbox?.username ?? `Mailbox ${mailboxId}`}</a>
 	</div>
 
 	{#if loading}
@@ -57,7 +60,12 @@
 				<div class="head-text">
 					<div class="from">{cleanName(email.from_address)}</div>
 					<div class="subject">{email.subject || '(no subject)'}</div>
-					<div class="date">{fmtDate(email.received_at)}</div>
+					<div class="date">
+						{fmtDate(email.received_at)}
+						{#if mailbox}
+							<span class="inbox-tag">→ {mailbox.username}{mailbox.primary_inbox ? ` · ${mailbox.primary_inbox}` : ''}</span>
+						{/if}
+					</div>
 				</div>
 			</div>
 			<hr class="rule" />
@@ -70,7 +78,7 @@
 			</div>
 		</article>
 		<div class="back">
-			<a class="btn btn-ghost" href={`/mailbox/${mailboxId}`}>← Back to inbox</a>
+			<a class="btn btn-ghost" href="/">← Back to all mail</a>
 		</div>
 	{/if}
 </div>
@@ -132,6 +140,11 @@
 	.date {
 		color: var(--text-dim);
 		font-size: 13px;
+	}
+
+	.inbox-tag {
+		margin-left: 8px;
+		color: var(--accent-strong);
 	}
 
 	.rule {
