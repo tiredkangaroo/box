@@ -1,0 +1,262 @@
+:root {
+	--bg: #0f1115;
+	--bg-elev: #181b22;
+	--bg-elev-2: #21252e;
+	--border: #2a2f3a;
+	--text: #e6e8ee;
+	--text-dim: #9aa3b2;
+	--accent: #5b8def;
+	--accent-strong: #7aa5ff;
+	--danger: #e5534b;
+	--ok: #57ab5a;
+	--radius: 10px;
+	--shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+	font-family:
+		system-ui,
+		-apple-system,
+		'Segoe UI',
+		Roboto,
+		Helvetica,
+		Arial,
+		sans-serif;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+	background: var(--bg);
+	color: var(--text);
+	font-size: 15px;
+	line-height: 1.5;
+	height: 100%;
+}
+
+a {
+	color: var(--accent-strong);
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+.app {
+	min-height: 100dvh;
+	display: flex;
+	flex-direction: column;
+}
+
+.topbar {
+	display: flex;
+	align-items: center;
+	gap: 24px;
+	padding: 14px 28px;
+	border-bottom: 1px solid var(--border);
+	background: var(--bg-elev);
+	position: sticky;
+	top: 0;
+	z-index: 10;
+}
+
+.brand {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-weight: 700;
+	font-size: 17px;
+	color: var(--text);
+	text-decoration: none !important;
+}
+
+.brand-mark {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	border-radius: 8px;
+	background: var(--accent);
+	color: #fff;
+	font-size: 15px;
+}
+
+.nav a {
+	color: var(--text-dim);
+	text-decoration: none;
+	font-weight: 600;
+}
+
+.nav a:hover {
+	color: var(--text);
+}
+
+.content {
+	flex: 1;
+	width: 100%;
+	max-width: 920px;
+	margin: 0 auto;
+	padding: 28px;
+}
+
+.page-title {
+	font-size: 24px;
+	font-weight: 700;
+	margin: 0 0 4px;
+}
+
+.page-sub {
+	color: var(--text-dim);
+	margin: 0 0 24px;
+}
+
+h1,
+h2,
+h3 {
+	line-height: 1.25;
+}
+
+.btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	border: 1px solid var(--border);
+	background: var(--bg-elev-2);
+	color: var(--text);
+	padding: 9px 16px;
+	border-radius: var(--radius);
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	transition:
+		background 0.15s ease,
+		border-color 0.15s ease,
+		transform 0.05s ease;
+}
+
+.btn:hover:not(:disabled) {
+	background: #29303c;
+	border-color: #3a4252;
+}
+
+.btn:active:not(:disabled) {
+	transform: translateY(1px);
+}
+
+.btn:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.btn-primary {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+	background: var(--accent-strong);
+	border-color: var(--accent-strong);
+}
+
+.btn-ghost {
+	background: transparent;
+}
+
+.btn-danger {
+	background: var(--danger);
+	border-color: var(--danger);
+	color: #fff;
+}
+
+.btn-sm {
+	padding: 6px 12px;
+	font-size: 13px;
+}
+
+.card {
+	background: var(--bg-elev);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow);
+}
+
+.spinner {
+	width: 18px;
+	height: 18px;
+	border: 2px solid rgba(255, 255, 255, 0.25);
+	border-top-color: currentColor;
+	border-radius: 50%;
+	animation: spin 0.7s linear infinite;
+	display: inline-block;
+}
+
+.spinner-center {
+	display: grid;
+	place-items: center;
+	padding: 60px 0;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.empty {
+	color: var(--text-dim);
+	text-align: center;
+	padding: 40px 20px;
+	border: 1px dashed var(--border);
+	border-radius: var(--radius);
+}
+
+.error-banner {
+	background: rgba(229, 83, 75, 0.12);
+	border: 1px solid rgba(229, 83, 75, 0.4);
+	color: #ffb3ae;
+	padding: 11px 16px;
+	border-radius: var(--radius);
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.success-banner {
+	background: rgba(87, 171, 90, 0.12);
+	border: 1px solid rgba(87, 171, 90, 0.4);
+	color: #9bd69e;
+	padding: 11px 16px;
+	border-radius: var(--radius);
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.field label {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--text-dim);
+}
+
+.field input {
+	background: var(--bg);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	color: var(--text);
+	padding: 10px 12px;
+	font-size: 14px;
+}
+
+.field input:focus {
+	outline: none;
+	border-color: var(--accent);
+}

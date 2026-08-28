@@ -152,6 +152,7 @@ func (db *DB) ListEmails(ctx context.Context, tx *pgx.Tx, mailboxID int) ([]Emai
 	var emails []Email
 	for rows.Next() {
 		var email Email
+		email.Mailbox = &Mailbox{}
 		err := rows.Scan(&email.ID, &email.Mailbox.ID, &email.UID, &email.MessageID, &email.Subject, &email.FromAddress, &email.RecievedAt)
 		if err != nil {
 			return nil, err
@@ -164,8 +165,9 @@ func (db *DB) ListEmails(ctx context.Context, tx *pgx.Tx, mailboxID int) ([]Emai
 // get email with body
 func (db *DB) GetEmail(ctx context.Context, tx *pgx.Tx, mailboxID int, messageID string) (*Email, error) {
 	var email Email
+	email.Mailbox = &Mailbox{}
 	err := connOrTx(db, tx).QueryRow(ctx,
-		"SELECT id, mailbox_id, uid, message_id, subject, from_address, received_at, body FROM emails WHERE mailbox_id = $1 AND message_id = $2",
+		"SELECT id, mailbox_id, uid, message_id, subject, from_address, received_at, body FROM emails WHERE mailbox_id = $1 AND id = $2",
 		mailboxID,
 		messageID,
 	).Scan(&email.ID, &email.Mailbox.ID, &email.UID, &email.MessageID, &email.Subject, &email.FromAddress, &email.RecievedAt, &email.Body)

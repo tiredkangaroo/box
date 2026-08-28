@@ -1,47 +1,25 @@
 package main
 
 import (
-	"io"
 	"log/slog"
 	"net/http"
 	"os"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 var DEBUG = os.Getenv("DEBUG") == "true"
 
-func server(db *DB) {
+func server(db *DB) error {
 	app := echo.New()
 
-	api := app.Group("/api")
-
-	app.Any("", func(c echo.Context) error {
-		if DEBUG {
-			// proxy to frontend development server
-			defer c.Request().Body.Close()
-			req, err := http.NewRequest(c.Request().Method, "http://localhost:5173"+c.Request().URL.String(), c.Request().Body)
-			if err != nil {
-				return err
-			}
-			client := &http.Client{}
-			resp, err := client.Do(req)
-			if err != nil {
-				return err
-			}
-			defer resp.Body.Close()
-			c.Response().WriteHeader(resp.StatusCode)
-			_, err = io.Copy(c.Response().Writer, resp.Body)
-			if err != nil {
-				return err
-			}
-		} else {
-			// serve static files
-			// note: this is unsafe ! (perhaps? path traversal vuln!!)
-			return c.File("public/" + c.Request().URL.String())
-		}
-	})
+	api := app.Group("/api", middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOriginFunc: func(origin string) (bool, error) {
+			return origin == "http://localhost:5173" && DEBUG, nil
+		},
+	}))
 
 	api.GET("/mailboxes", func(c echo.Context) error {
 		mailboxes, err := db.ListMailboxes(c.Request().Context(), nil)
@@ -120,4 +98,6 @@ func server(db *DB) {
 
 		return c.JSON(http.StatusOK, email)
 	})
+
+	return app.Start(":9000")
 }

@@ -22,6 +22,10 @@ func main() {
 		panic(err)
 	}
 
+	if err := server(db); err != nil {
+		panic(err)
+	}
+
 	// mailbox := Mailbox{
 	// 	ID:             1,
 	// 	ServerHostport: os.Getenv("IMAP_HOSTPORT"),
