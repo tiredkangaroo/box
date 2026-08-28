@@ -110,6 +110,71 @@ func (db *DB) InsertMailbox(ctx context.Context, tx *pgx.Tx, mailbox Mailbox) (i
 	return id, nil
 }
 
+func (db *DB) ListMailboxes(ctx context.Context, tx *pgx.Tx) ([]Mailbox, error) {
+	rows, err := connOrTx(db, tx).Query(ctx, "SELECT id, server_hostport, username, password, primary_inbox_name FROM mailboxes")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var mailboxes []Mailbox
+	for rows.Next() {
+		var mailbox Mailbox
+		err := rows.Scan(&mailbox.ID, &mailbox.ServerHostport, &mailbox.Username, &mailbox.Password, &mailbox.PrimaryInbox)
+		if err != nil {
+			return nil, err
+		}
+		mailboxes = append(mailboxes, mailbox)
+	}
+	return mailboxes, nil
+}
+
+func (db *DB) GetMailbox(ctx context.Context, tx *pgx.Tx, id int) (*Mailbox, error) {
+	var mailbox Mailbox
+	err := connOrTx(db, tx).QueryRow(ctx,
+		"SELECT id, server_hostport, username, password, primary_inbox_name FROM mailboxes WHERE id = $1",
+		id,
+	).Scan(&mailbox.ID, &mailbox.ServerHostport, &mailbox.Username, &mailbox.Password, &mailbox.PrimaryInbox)
+	if err != nil {
+		return nil, err
+	}
+	return &mailbox, nil
+}
+
+// list emails for a given mailbox without their body
+func (db *DB) ListEmails(ctx context.Context, tx *pgx.Tx, mailboxID int) ([]Email, error) {
+	rows, err := connOrTx(db, tx).Query(ctx, "SELECT id, mailbox_id, uid, message_id, subject, from_address, received_at FROM emails WHERE mailbox_id = $1", mailboxID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var emails []Email
+	for rows.Next() {
+		var email Email
+		err := rows.Scan(&email.ID, &email.Mailbox.ID, &email.UID, &email.MessageID, &email.Subject, &email.FromAddress, &email.RecievedAt)
+		if err != nil {
+			return nil, err
+		}
+		emails = append(emails, email)
+	}
+	return emails, nil
+}
+
+// get email with body
+func (db *DB) GetEmail(ctx context.Context, tx *pgx.Tx, mailboxID int, messageID string) (*Email, error) {
+	var email Email
+	err := connOrTx(db, tx).QueryRow(ctx,
+		"SELECT id, mailbox_id, uid, message_id, subject, from_address, received_at, body FROM emails WHERE mailbox_id = $1 AND message_id = $2",
+		mailboxID,
+		messageID,
+	).Scan(&email.ID, &email.Mailbox.ID, &email.UID, &email.MessageID, &email.Subject, &email.FromAddress, &email.RecievedAt, &email.Body)
+	if err != nil {
+		return nil, err
+	}
+	return &email, nil
+}
+
 type QueryAndExec interface {
 	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
 	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row

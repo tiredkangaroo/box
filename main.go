@@ -22,20 +22,28 @@ func main() {
 		panic(err)
 	}
 
-	mailbox := Mailbox{
-		ID:             1,
-		ServerHostport: os.Getenv("IMAP_HOSTPORT"),
-		Username:       os.Getenv("IMAP_USERNAME"),
-		Password:       os.Getenv("IMAP_PASSWORD"),
-		PrimaryInbox:   "INBOX",
-	}
+	// mailbox := Mailbox{
+	// 	ID:             1,
+	// 	ServerHostport: os.Getenv("IMAP_HOSTPORT"),
+	// 	Username:       os.Getenv("IMAP_USERNAME"),
+	// 	Password:       os.Getenv("IMAP_PASSWORD"),
+	// 	PrimaryInbox:   "INBOX",
+	// }
+
+	// mailboxes, err := db.ListMailboxes(ctx, nil)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// for _, mailbox := range mailboxes {
+	// 	slog.Info("found mailbox", "id", mailbox.ID, "hostport", mailbox.ServerHostport, "username", mailbox.Username)
+	// }
 
 	// if id, err := db.InsertMailbox(ctx, nil, mailbox); err != nil {
 	// 	panic(err)
 	// }
 	// mailbox.ID = id
 
-	if err = syncMailbox(ctx, db, mailbox); err != nil {
-		panic(err)
-	}
+	// if err = syncMailbox(ctx, db, mailbox); err != nil {
+	// 	panic(err)
+	// }
 }

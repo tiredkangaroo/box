@@ -15,13 +15,12 @@ import (
 )
 
 // message
-
 type Mailbox struct {
 	ID             int    `json:"id"`
-	ServerHostport string // so for migadu it would be "imap.migadu.com:993"
-	Username       string // email addr
-	Password       string
-	PrimaryInbox   string // e.g. "INBOX"
+	ServerHostport string `json:"server_hostport"` // so for migadu it would be "imap.migadu.com:993"
+	Username       string `json:"username"`        // email addr
+	Password       string `json:"-"`               // the - makes it so that it will NOT be included in JSON output
+	PrimaryInbox   string `json:"primary_inbox"`   // e.g. "INBOX"
 }
 
 type Email struct {
