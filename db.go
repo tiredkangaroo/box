@@ -18,13 +18,13 @@ func (db *DB) RunMigrations(ctx context.Context) error {
         username TEXT NOT NULL,
         password TEXT NOT NULL,
         primary_inbox_name TEXT NOT NULL,
-        last_uid uint32 DEFAULT 0
+        last_uid INTEGER NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS emails (
         id SERIAL PRIMARY KEY,
         mailbox_id INT NOT NULL REFERENCES mailboxes(id),
-        uid uint32 NOT NULL,
+        uid INTEGER NOT NULL,
         message_id TEXT NOT NULL,
         subject TEXT NOT NULL,
         from_address TEXT NOT NULL,
@@ -93,6 +93,21 @@ func (db *DB) InsertEmailandUpdateLastSyncedUID(ctx context.Context, email Email
 
 	// commit the transaction
 	return tx.Commit(ctx)
+}
+
+func (db *DB) InsertMailbox(ctx context.Context, tx *pgx.Tx, mailbox Mailbox) (int, error) {
+	var id int
+	err := connOrTx(db, tx).QueryRow(ctx,
+		"INSERT INTO mailboxes (server_hostport, username, password, primary_inbox_name) VALUES ($1, $2, $3, $4) RETURNING id",
+		mailbox.ServerHostport,
+		mailbox.Username,
+		mailbox.Password,
+		mailbox.PrimaryInbox,
+	).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
 }
 
 type QueryAndExec interface {

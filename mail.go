@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"log/slog"
+	"mime"
 	"time"
 
 	"github.com/emersion/go-imap/v2"
@@ -66,6 +68,7 @@ func syncMailbox(ctx context.Context, db *DB, mailbox Mailbox) error {
 	}
 
 	if selectedInbox.UIDNext > 0 && imap.UID(lastSyncedUID) >= selectedInbox.UIDNext-1 {
+		slog.Info("all messages are already synced", "mailbox", mailbox.ID)
 		return nil // all messages are already synced
 	}
 
@@ -104,7 +107,7 @@ func syncMailbox(ctx context.Context, db *DB, mailbox Mailbox) error {
 		}
 
 		var emailUID uint32
-		var bodyReader io.Reader
+		var bodyData []byte
 
 		// need to capture the uid and the body reader for the actual mail
 		for {
@@ -114,23 +117,30 @@ func syncMailbox(ctx context.Context, db *DB, mailbox Mailbox) error {
 			}
 			switch v := item.(type) {
 			case imapclient.FetchItemDataBodySection:
-				bodyReader = v.Literal
+				bodyReader := v.Literal
+				bodyData, err = io.ReadAll(bodyReader)
+				if err != nil {
+					slog.Error("couldn't read body data", "mailbox", mailbox.ID, "uid", emailUID, "error", err)
+					continue
+				}
 			case imapclient.FetchItemDataUID:
 				emailUID = uint32(v.UID)
 			}
 		}
-		if bodyReader == nil {
+		if bodyData == nil {
+			slog.Error("no body data", "mailbox", mailbox.ID, "uid", emailUID)
 			continue
 		}
 
 		// parse mime envelope using github.com/emersion/go-message
-		mr, err := mail.CreateReader(bodyReader)
+		mr, err := mail.CreateReader(bytes.NewReader(bodyData))
 		if err != nil {
 			slog.Error("couldn't parse MIME for message", "mailbox", mailbox.ID, "uid", emailUID, "error", err)
 			continue
 		}
 
 		header := mr.Header
+		// note: maybe look at these errors
 		subject, _ := header.Subject()
 		msgID, _ := header.MessageID()
 		from, _ := header.AddressList("From")
@@ -150,12 +160,16 @@ func syncMailbox(ctx context.Context, db *DB, mailbox Mailbox) error {
 				break
 			}
 
-			switch part.Header.Get("Content-Type") {
-			case "text/plain":
-			case "text/html":
+			// using this bc of bs like "text/plain charset=utf-8" like shut up pls; but uh yeah standard processing
+			ct, _, err := mime.ParseMediaType(part.Header.Get("Content-Type"))
+			if err != nil {
+				slog.Error("couldn't parse content type", "mailbox", mailbox.ID, "uid", emailUID, "error", err)
+				continue
+			}
+			if ct == "text/plain" || ct == "text/html" {
 				b, _ := io.ReadAll(part.Body)
 				bodyText = string(b)
-			default:
+			} else {
 				slog.Warn("unexpected content type", "mailbox", mailbox.ID, "uid", emailUID, "content_type", part.Header.Get("Content-Type"))
 			}
 		}
