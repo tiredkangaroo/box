@@ -1,0 +1,45 @@
+@import 'tailwindcss';
+
+:root { 
+    --primary-color: #43b4e0; /* yummy pink */
+    --primary-color-dark: #2894bf; /* darker pink */
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+/* a good part of the button code taken from https://auth.hackclub.com */
+a[role=button] {
+    background: linear-gradient(180deg, var(--primary-color), var(--primary-color-dark));
+    border: 1px solid #308cb0;
+    color: white;
+    box-shadow: 0 2px 6px #00000026, inset 0 1px #fff3, inset 0 -1px 1px #0003;
+    padding: 0.5rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+a[role=button]:hover {
+    /* background: linear-gradient(180deg, var(--primary-color-dark), var(--primary-color)); */
+    transform: translateY(-1.67px);
+    box-shadow: 0 4px 8px #00000026, inset 0 1px #fff3, inset 0 -1px 1px #0003;
+    transition: all 0.2s ease;
+}
+
+nav {
+    background-color: #f0f0f0;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
