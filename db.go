@@ -28,8 +28,10 @@ func (db *DB) RunMigrations(ctx context.Context) error {
         message_id TEXT NOT NULL,
         subject TEXT NOT NULL,
         from_address TEXT NOT NULL,
+		from_display_name TEXT NOT NULL,
         received_at TIMESTAMPTZ NOT NULL,
         body TEXT,
+		body_preview TEXT,
         UNIQUE(mailbox_id, uid)
     );
     `
@@ -59,14 +61,16 @@ func (db *DB) UpdateLastSyncedUID(ctx context.Context, tx *pgx.Tx, mailboxID int
 // add an email to the db; after this u probably want to update the last synced uid
 func (db *DB) InsertEmail(ctx context.Context, tx *pgx.Tx, email Email) error {
 	_, err := connOrTx(db, tx).Exec(ctx,
-		"INSERT INTO emails (mailbox_id, uid, message_id, subject, from_address, received_at, body) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+		"INSERT INTO emails (mailbox_id, uid, message_id, subject, from_address, from_display_name, received_at, body, body_preview) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
 		email.Mailbox.ID,
 		email.UID,
 		email.MessageID,
 		email.Subject,
 		email.FromAddress,
+		email.DisplayName,
 		email.RecievedAt,
 		email.Body,
+		email.BodyPreview,
 	)
 	return err
 }
@@ -143,7 +147,7 @@ func (db *DB) GetMailbox(ctx context.Context, tx *pgx.Tx, id int) (*Mailbox, err
 
 // list emails for a given mailbox without their body
 func (db *DB) ListEmails(ctx context.Context, tx *pgx.Tx, mailboxID int) ([]Email, error) {
-	rows, err := connOrTx(db, tx).Query(ctx, "SELECT id, mailbox_id, uid, message_id, subject, from_address, received_at FROM emails WHERE mailbox_id = $1", mailboxID)
+	rows, err := connOrTx(db, tx).Query(ctx, "SELECT id, mailbox_id, uid, message_id, subject, from_address, from_display_name, body_preview, received_at FROM emails WHERE mailbox_id = $1", mailboxID)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +157,7 @@ func (db *DB) ListEmails(ctx context.Context, tx *pgx.Tx, mailboxID int) ([]Emai
 	for rows.Next() {
 		var email Email
 		email.Mailbox = &Mailbox{}
-		err := rows.Scan(&email.ID, &email.Mailbox.ID, &email.UID, &email.MessageID, &email.Subject, &email.FromAddress, &email.RecievedAt)
+		err := rows.Scan(&email.ID, &email.Mailbox.ID, &email.UID, &email.MessageID, &email.Subject, &email.FromAddress, &email.DisplayName, &email.BodyPreview, &email.RecievedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -167,10 +171,10 @@ func (db *DB) GetEmail(ctx context.Context, tx *pgx.Tx, mailboxID int, messageID
 	var email Email
 	email.Mailbox = &Mailbox{}
 	err := connOrTx(db, tx).QueryRow(ctx,
-		"SELECT id, mailbox_id, uid, message_id, subject, from_address, received_at, body FROM emails WHERE mailbox_id = $1 AND id = $2",
+		"SELECT id, mailbox_id, uid, message_id, subject, from_address, from_display_name, body_preview, received_at, body FROM emails WHERE mailbox_id = $1 AND id = $2",
 		mailboxID,
 		messageID,
-	).Scan(&email.ID, &email.Mailbox.ID, &email.UID, &email.MessageID, &email.Subject, &email.FromAddress, &email.RecievedAt, &email.Body)
+	).Scan(&email.ID, &email.Mailbox.ID, &email.UID, &email.MessageID, &email.Subject, &email.FromAddress, &email.DisplayName, &email.BodyPreview, &email.RecievedAt, &email.Body)
 	if err != nil {
 		return nil, err
 	}

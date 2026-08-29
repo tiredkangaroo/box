@@ -30,8 +30,10 @@ type Email struct {
 	UID         uint32    `json:"-"` // unique identifier
 	MessageID   string    `json:"-"`
 	Subject     string    `json:"subject"`
+	DisplayName string    `json:"display_name"`
 	FromAddress string    `json:"from_address"`
 	Body        string    `json:"body"`
+	BodyPreview string    `json:"body_preview"` // we'll make it like first 100 chars
 	RecievedAt  time.Time `json:"received_at"`
 }
 
@@ -142,11 +144,17 @@ func syncMailbox(ctx context.Context, db *DB, mailbox Mailbox) error {
 		// note: maybe look at these errors
 		subject, _ := header.Subject()
 		msgID, _ := header.MessageID()
-		from, _ := header.AddressList("From")
+		fromList, _ := header.AddressList("From")
+		var displayName string
+		var fromAddress string
+		if len(fromList) > 0 {
+			sender := fromList[0]
+			displayName = sender.Name
 
-		senderStr := ""
-		if len(from) > 0 {
-			senderStr = from[0].String()
+			if displayName == "" { // fallback display name to email addr if no display name
+				displayName = sender.Address
+			}
+			fromAddress = sender.Address
 		}
 
 		// read body
@@ -185,7 +193,7 @@ func syncMailbox(ctx context.Context, db *DB, mailbox Mailbox) error {
 			UID:         emailUID,
 			MessageID:   msgID,
 			Subject:     subject,
-			FromAddress: senderStr,
+			FromAddress: fromAddress,
 			Body:        bodyText,
 			RecievedAt:  dt,
 		})
